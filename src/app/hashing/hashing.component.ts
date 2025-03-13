@@ -175,7 +175,7 @@ export class HashingComponent implements OnInit {
 
     this.messageInBinaryWithPadding = this.appendSingleBit(1);
 
-    // add K 0-bits
+    // add K 0-bits until the length -64 is dividible by 512
     while ((this.messageInBinaryWithPadding.length + 64) % 512 != 0) {
       this.messageInBinaryWithPadding = this.appendSingleBit(0);
     }
