@@ -6,6 +6,7 @@ import {
   Output,
 } from '@angular/core';
 import { Roundconstants } from './roundconstants';
+import { Rotator } from './Rotator';
 
 @Component({
   selector: 'app-hashing',
@@ -34,12 +35,18 @@ export class HashingComponent implements OnInit {
 
   digest: string = '';
 
+  rotator = new Rotator();
   chunks: string[] = [];
 
   constructor() {}
 
   ngOnInit(): void {
-    this.hashTheMessage();
+    let myNumber = 20;
+    console.log(myNumber);
+    myNumber = this.rotator.rotateLeftNumber(myNumber);
+    console.log(myNumber);
+
+    // this.hashTheMessage();
   }
 
   hashTheMessage() {
@@ -144,6 +151,12 @@ export class HashingComponent implements OnInit {
       .split('')
       .map((char) => char.charCodeAt(0).toString(2).padStart(bitlength, '0'))
       .join('');
+  }
+
+  numberTo32BitString(n: number):string {
+    // Convert to binary and pad with leading zeros to ensure 32 bits
+    const binaryString = n.toString(2).padStart(32, '0');
+    return binaryString
   }
 
   sendHashValuesAndMessage() {
