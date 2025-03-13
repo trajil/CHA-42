@@ -16,14 +16,10 @@ export class HashingComponent implements OnInit {
   @Output() originalMessage = new EventEmitter<string>();
 
   // Initialize hash values: (first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
-  H0: number = 0x6a09e667;
-  H1: number = 0xbb67ae85;
-  H2: number = 0x3c6ef372;
-  H3: number = 0xa54ff53a;
-  H4: number = 0x510e527f;
-  H5: number = 0x9b05688c;
-  H6: number = 0x1f83d9ab;
-  H7: number = 0x5be0cd19;
+  hashArray: number[] = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c,
+    0x1f83d9ab, 0x5be0cd19,
+  ];
 
   // Initialize array of round constants: (first 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311):
   roundConstantsArray: number[] = [
@@ -40,16 +36,6 @@ export class HashingComponent implements OnInit {
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
   ];
 
-  hashArray: number[] = [
-    this.H0,
-    this.H1,
-    this.H2,
-    this.H3,
-    this.H4,
-    this.H5,
-    this.H6,
-    this.H7,
-  ];
   messageOriginal: string = 'abc';
   messageInBinaryWithPadding: string = '';
   messageLength: number = 0;
@@ -72,11 +58,12 @@ export class HashingComponent implements OnInit {
     );
 
     // chunking
-    this.divideIntoChunks(this.messageInBinaryWithPadding);
+    this.chunks = this.divideIntoChunks(this.messageInBinaryWithPadding);
     console.log(this.chunks);
-    // compressing
+
+    // hashing each chunk
     this.chunks.forEach((element) => {
-      this.compress();
+      this.hashingEachChunk(element);
     });
 
     // combining Hash and sending Data
@@ -86,8 +73,68 @@ export class HashingComponent implements OnInit {
     this.sendHashValuesAndMessage();
   }
 
-  compress() {
-    throw new Error('Method not implemented.');
+  hashingEachChunk(chunk: string) {
+    // create a 64-entry message schedule array w[0..63] of 32-bit words
+    let messageScheduleArray: Array<string> = [];
+    let messageScheduleArraySize = 64;
+
+    // copy chunk into first 16 words w[0..15] of the message schedule array
+    let first16WordsOfChunkAs32Bit: Array<string> = this.divideIntoChunks(
+      chunk,
+      32
+    );
+
+    for (let index = 0; index < messageScheduleArraySize; index++) {
+      if (index < 16) {
+        messageScheduleArray[index] = first16WordsOfChunkAs32Bit[index];
+      } else {
+        messageScheduleArray[index] = '';
+      }
+    }
+
+    // Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array:
+    // for i from 16 to 63
+    //     s0 := (w[i-15] rightrotate 7) xor (w[i-15] rightrotate 18) xor (w[i-15] rightshift  3)
+    //     s1 := (w[i-2] rightrotate 17) xor (w[i-2] rightrotate 19) xor (w[i-2] rightshift 10)
+    //     w[i] := w[i-16] + s0 + w[i-7] + s1
+
+    // Initialize working variables to current hash value:
+    let a = this.hashArray[0];
+    let b = this.hashArray[1];
+    let c = this.hashArray[2];
+    let d = this.hashArray[3];
+    let e = this.hashArray[4];
+    let f = this.hashArray[5];
+    let g = this.hashArray[6];
+    let h = this.hashArray[7];
+
+    // Compression function main loop:
+    // for i from 0 to 63
+    //     S1 := (e rightrotate 6) xor (e rightrotate 11) xor (e rightrotate 25)
+    //     ch := (e and f) xor ((not e) and g)
+    //     temp1 := h + S1 + ch + k[i] + w[i]
+    //     S0 := (a rightrotate 2) xor (a rightrotate 13) xor (a rightrotate 22)
+    //     maj := (a and b) xor (a and c) xor (b and c)
+    //     temp2 := S0 + maj
+
+    //     h := g
+    //     g := f
+    //     f := e
+    //     e := d + temp1
+    //     d := c
+    //     c := b
+    //     b := a
+    //     a := temp1 + temp2
+
+    // Add the compressed chunk to the current hash value:
+    // h0 := h0 + a
+    // h1 := h1 + b
+    // h2 := h2 + c
+    // h3 := h3 + d
+    // h4 := h4 + e
+    // h5 := h5 + f
+    // h6 := h6 + g
+    // h7 := h7 + h
   }
 
   text2Binary(text: string, bitlength: number = 8) {
@@ -156,13 +203,17 @@ export class HashingComponent implements OnInit {
     return this.chunks;
   }
 
-  divideIntoChunks(messageToChunk: string, chunkLength: number = 512) {
+  divideIntoChunks(
+    messageToChunk: string,
+    chunkLength: number = 512
+  ): Array<string> {
+    let chunks: string[] = [];
     for (let index = 0; index < messageToChunk.length / chunkLength; index++) {
-      this.chunks[index] = messageToChunk.substring(
+      chunks[index] = messageToChunk.substring(
         index * chunkLength,
         (index + 1) * chunkLength
       );
     }
-    return this.chunks;
+    return chunks;
   }
 }
