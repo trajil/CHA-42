@@ -9,7 +9,7 @@ import { Roundconstants } from './roundconstants';
 
 @Component({
   selector: 'app-hashing',
-  template: `<p>hashing works!</p>`,
+  template: `<h1>CHA-42</h1>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HashingComponent implements OnInit {
@@ -43,7 +43,7 @@ export class HashingComponent implements OnInit {
   ngOnInit(): void {
     this.hashTheMessage();
   }
-  
+
   hashTheMessage() {
     // preprocessing
     this.messageInBinaryWithPadding = this.preProcessMessage(
@@ -95,9 +95,15 @@ export class HashingComponent implements OnInit {
     }
 
     // Initialize working variables to current hash value:
-    let a = this.text2Binary(this.hashArray[0].toString(),32);
-    console.log("hashArray[0]: ",this.hashArray[0].toString(2));
-    console.log("a after initialisation: ",a);
+    // let a = this.text2Binary(this.hashArray[0].toString(),32);
+    let a = this.hashArray[0];
+    console.log(
+      'hashArray[0]: ',
+      this.hashArray[0],
+      'type of H0:',
+      typeof this.hashArray[0]
+    );
+    console.log('a after initialisation: ', a, 'type of a:', typeof a);
     let b = this.hashArray[1];
     let c = this.hashArray[2];
     let d = this.hashArray[3];
@@ -125,23 +131,20 @@ export class HashingComponent implements OnInit {
     //     a := temp1 + temp2
 
     // Add the compressed chunk to the current hash value:
+
+    this.hashArray[0] = (this.hashArray[0] + a) % this.bit32;
     console.log(
-      'End of round of hashingChunk before adding a, value of H0: ',
-      this.hashArray[0].toString(16)
-    );
-    this.hashArray[0] = this.hashArray[0] + 1;
-    this.hashArray[0] = this.hashArray[0] % this.bit32;
-    console.log(
-      'End of round of hashingChunk after adding a, value of H0: ',
+      'End of round of hashingChunk after adding a, value of H0 MODULO 2^32: ',
       this.hashArray[0]
     );
-    this.hashArray[1] += b;
-    this.hashArray[2] += c;
-    this.hashArray[3] += d;
-    this.hashArray[4] += e;
-    this.hashArray[5] += f;
-    this.hashArray[6] += g;
-    this.hashArray[7] += h;
+
+    this.hashArray[1] = (this.hashArray[1] + b) % this.bit32;
+    this.hashArray[2] = (this.hashArray[2] + c) % this.bit32;
+    this.hashArray[3] = (this.hashArray[3] + d) % this.bit32;
+    this.hashArray[4] = (this.hashArray[4] + e) % this.bit32;
+    this.hashArray[5] = (this.hashArray[5] + f) % this.bit32;
+    this.hashArray[6] = (this.hashArray[6] + g) % this.bit32;
+    this.hashArray[7] = (this.hashArray[7] + h) % this.bit32;
   }
 
   text2Binary(text: string, bitlength: number = 8) {
@@ -151,8 +154,7 @@ export class HashingComponent implements OnInit {
       .join('');
   }
 
-  chopToNbit(inputNumber: number, bits: number): number
-  {
+  chopToNbit(inputNumber: number, bits: number): number {
     return inputNumber;
   }
 
