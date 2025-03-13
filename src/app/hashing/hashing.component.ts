@@ -5,6 +5,7 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
+import { Roundconstants } from './roundconstants';
 
 @Component({
   selector: 'app-hashing',
@@ -22,19 +23,11 @@ export class HashingComponent implements OnInit {
   ];
 
   // Initialize array of round constants: (first 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311):
-  roundConstantsArray: number[] = [
-    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
-    0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-    0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786,
-    0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147,
-    0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
-    0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
-    0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a,
-    0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-    0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
-  ];
+  roundConstantsArrayImport = new Roundconstants();
+  roundConstantsArray = this.roundConstantsArrayImport.roundConstantsArray;
+
+  // All variables are 32 bit unsigned integers and addition is calculated modulo 2^32
+  bit32 = 4294967296;
 
   messageOriginal: string = 'abc';
   messageInBinaryWithPadding: string = '';
@@ -50,7 +43,7 @@ export class HashingComponent implements OnInit {
   ngOnInit(): void {
     this.hashTheMessage();
   }
-
+  
   hashTheMessage() {
     // preprocessing
     this.messageInBinaryWithPadding = this.preProcessMessage(
@@ -83,7 +76,6 @@ export class HashingComponent implements OnInit {
       chunk,
       32
     );
-
     for (let index = 0; index < messageScheduleArraySize; index++) {
       if (index < 16) {
         messageScheduleArray[index] = first16WordsOfChunkAs32Bit[index];
@@ -98,8 +90,14 @@ export class HashingComponent implements OnInit {
     //     s1 := (w[i-2] rightrotate 17) xor (w[i-2] rightrotate 19) xor (w[i-2] rightshift 10)
     //     w[i] := w[i-16] + s0 + w[i-7] + s1
 
+    for (let index = 16; index < messageScheduleArraySize; index++) {
+      // console.log(index)
+    }
+
     // Initialize working variables to current hash value:
-    let a = this.hashArray[0];
+    let a = this.text2Binary(this.hashArray[0].toString(),32);
+    console.log("hashArray[0]: ",this.hashArray[0].toString(2));
+    console.log("a after initialisation: ",a);
     let b = this.hashArray[1];
     let c = this.hashArray[2];
     let d = this.hashArray[3];
@@ -127,14 +125,23 @@ export class HashingComponent implements OnInit {
     //     a := temp1 + temp2
 
     // Add the compressed chunk to the current hash value:
-    // h0 := h0 + a
-    // h1 := h1 + b
-    // h2 := h2 + c
-    // h3 := h3 + d
-    // h4 := h4 + e
-    // h5 := h5 + f
-    // h6 := h6 + g
-    // h7 := h7 + h
+    console.log(
+      'End of round of hashingChunk before adding a, value of H0: ',
+      this.hashArray[0].toString(16)
+    );
+    this.hashArray[0] = this.hashArray[0] + 1;
+    this.hashArray[0] = this.hashArray[0] % this.bit32;
+    console.log(
+      'End of round of hashingChunk after adding a, value of H0: ',
+      this.hashArray[0]
+    );
+    this.hashArray[1] += b;
+    this.hashArray[2] += c;
+    this.hashArray[3] += d;
+    this.hashArray[4] += e;
+    this.hashArray[5] += f;
+    this.hashArray[6] += g;
+    this.hashArray[7] += h;
   }
 
   text2Binary(text: string, bitlength: number = 8) {
@@ -142,6 +149,11 @@ export class HashingComponent implements OnInit {
       .split('')
       .map((char) => char.charCodeAt(0).toString(2).padStart(bitlength, '0'))
       .join('');
+  }
+
+  chopToNbit(inputNumber: number, bits: number): number
+  {
+    return inputNumber;
   }
 
   sendHashValuesAndMessage() {
@@ -197,10 +209,6 @@ export class HashingComponent implements OnInit {
       this.messageInBinaryWithPadding.length
     );
     return this.messageInBinaryWithPadding;
-  }
-
-  chunkMessage(message: string): string[] {
-    return this.chunks;
   }
 
   divideIntoChunks(
