@@ -7,19 +7,24 @@ import { HashingComponent } from './hashing/hashing.component';
   standalone: true,
   imports: [RouterOutlet, HashingComponent],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
   title = 'CHA-42';
-  wert?: number;
+  wert?: string;
+  message?: string;
 
-  constructor()
-  {
-    this.wert = 3;
+  constructor() {
+    this.wert = '';
+    this.message = '';
   }
 
-  receiveHashValues(value: number) {
-    this.wert = value;
-    console.log('Received hash value:', value);
+  receiveHashValues(hash: string) {
+    this.wert = hash;
+    console.log('Received hash value:', hash);
+  }
+  receiveMessage(message: string) {
+    this.message = message;
+    console.log('Received message:', message);
   }
 }

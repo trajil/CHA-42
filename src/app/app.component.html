@@ -1,4 +1,16 @@
-<app-hashing (hashValues)="receiveHashValues($event)"></app-hashing>
+<app-hashing
+  (hashValues)="receiveHashValues($event)"
+  (originalMessage)="receiveMessage($event)"
+></app-hashing>
 <div>
-  Hash Value from HashingComponent: {{ wert }}
+  <h2>Original Message:</h2>
+  {{ message }}<br />
+  <h2>Hash Value from HashingComponent:</h2>
+
+  {{ wert }}
 </div>
+<br />
+<br />
+<h2>ZIEL (Eingabe: abc):</h2>
+
+ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad

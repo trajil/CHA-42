@@ -12,7 +12,8 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HashingComponent implements OnInit {
-  @Output() hashValues = new EventEmitter<number>();
+  @Output() hashValues = new EventEmitter<string>();
+  @Output() originalMessage = new EventEmitter<string>();
 
   // Initialize hash values: (first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
   H0: number = 0x6a09e667;
@@ -70,27 +71,20 @@ export class HashingComponent implements OnInit {
     this.messageInBinaryWithPadding = this.preProcessMessage(
       this.messageOriginal
     );
-    console.log(
-      'original message: ',
-      this.messageOriginal,
-      ' - padded message length: ',
-      this.messageInBinaryWithPadding.length
-    );
 
     // chunking
     this.divideIntoChunks(this.messageInBinaryWithPadding);
-    let zahl = 10000000;
-    console.log(
-      'before rotate:',
-      zahl.toString(2),
-      'after rotate: ',
-      this.rightRotate(zahl, 1).toString(2)
-    );
+
     // compressing
 
     // combining
-    this.digest = this.combineHashesToDigest();
     console.log(this.digest);
+
+    // sending Data
+    this.hashArray.forEach((element) => {
+      this.digest += element.toString(16);
+    });
+    this.sendHashValuesAndMessage();
   }
 
   text2Binary(text: string, bitlength: number = 8) {
@@ -100,8 +94,9 @@ export class HashingComponent implements OnInit {
       .join('');
   }
 
-  sendHashValues(hash: number) {
-    this.hashValues.emit(hash);
+  sendHashValuesAndMessage() {
+    this.hashValues.emit(this.digest);
+    this.originalMessage.emit(this.messageOriginal);
   }
 
   appendMultipleBits(bitAmount: number, bitType: number) {
@@ -145,6 +140,12 @@ export class HashingComponent implements OnInit {
     this.messageInBinaryWithPadding = this.appendLengthIn64bit(
       this.messageLengthIn64bit
     );
+    console.log(
+      'original message: ',
+      this.messageOriginal,
+      ' - padded message length: ',
+      this.messageInBinaryWithPadding.length
+    );
     return this.messageInBinaryWithPadding;
   }
 
@@ -152,17 +153,20 @@ export class HashingComponent implements OnInit {
     return this.chunks;
   }
 
-  combineHashesToDigest(): string {
-    let result =
-      '' +
-      this.H0 +
-      this.H1 +
-      this.H2 +
-      this.H3 +
-      this.H4 +
-      this.H5 +
-      this.H6 +
-      this.H7;
+  combineHashesToDigest(): Array<number> {
+    // let result =
+    //   '' +
+    //   this.H0 +
+    //   this.H1 +
+    //   this.H2 +
+    //   this.H3 +
+    //   this.H4 +
+    //   this.H5 +
+    //   this.H6 +
+    //   this.H7;
+
+    let result: Array<number> = [];
+
     return result;
   }
 
@@ -171,23 +175,5 @@ export class HashingComponent implements OnInit {
       this.chunks[index] = '';
     }
     return this.chunks;
-  }
-
-  INT_BITS = 32;
-  leftRotate(n: number, d: number) {
-    /* In n<<d, last d bits are 0. To
-    put first 3 bits of n at 
-    last, do bitwise or of n<<d   
-    with n >>(INT_BITS - d) */
-    return (n << d) | (n >> (this.INT_BITS - d));
-  }
-
-  /*Function to right rotate n by d bits*/
-  rightRotate(n: number, d: number) {
-    /* In n>>d, first d bits are 0. 
-    To put last 3 bits of at 
-    first, do bitwise or of n>>d
-    with n <<(INT_BITS - d) */
-    return (n >> d) | (n << (this.INT_BITS - d));
   }
 }
