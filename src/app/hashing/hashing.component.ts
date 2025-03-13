@@ -27,12 +27,10 @@ export class HashingComponent implements OnInit {
   roundConstantsArray = this.roundConstantsArrayImport.roundConstantsArray;
 
   // All variables are 32 bit unsigned integers and addition is calculated modulo 2^32
-  bit32 = 4294967296;
+  _32bitCeiling = 4294967296;
 
   messageOriginal: string = 'abc';
   messageInBinaryWithPadding: string = '';
-  messageLength: number = 0;
-  messageLengthIn64bit: string = '';
 
   digest: string = '';
 
@@ -97,12 +95,6 @@ export class HashingComponent implements OnInit {
     // Initialize working variables to current hash value:
     // let a = this.text2Binary(this.hashArray[0].toString(),32);
     let a = this.hashArray[0];
-    console.log(
-      'hashArray[0]: ',
-      this.hashArray[0],
-      'type of H0:',
-      typeof this.hashArray[0]
-    );
     console.log('a after initialisation: ', a, 'type of a:', typeof a);
     let b = this.hashArray[1];
     let c = this.hashArray[2];
@@ -132,19 +124,19 @@ export class HashingComponent implements OnInit {
 
     // Add the compressed chunk to the current hash value:
 
-    this.hashArray[0] = (this.hashArray[0] + a) % this.bit32;
+    this.hashArray[0] = (this.hashArray[0] + a) % this._32bitCeiling;
     console.log(
       'End of round of hashingChunk after adding a, value of H0 MODULO 2^32: ',
       this.hashArray[0]
     );
 
-    this.hashArray[1] = (this.hashArray[1] + b) % this.bit32;
-    this.hashArray[2] = (this.hashArray[2] + c) % this.bit32;
-    this.hashArray[3] = (this.hashArray[3] + d) % this.bit32;
-    this.hashArray[4] = (this.hashArray[4] + e) % this.bit32;
-    this.hashArray[5] = (this.hashArray[5] + f) % this.bit32;
-    this.hashArray[6] = (this.hashArray[6] + g) % this.bit32;
-    this.hashArray[7] = (this.hashArray[7] + h) % this.bit32;
+    this.hashArray[1] = (this.hashArray[1] + b) % this._32bitCeiling;
+    this.hashArray[2] = (this.hashArray[2] + c) % this._32bitCeiling;
+    this.hashArray[3] = (this.hashArray[3] + d) % this._32bitCeiling;
+    this.hashArray[4] = (this.hashArray[4] + e) % this._32bitCeiling;
+    this.hashArray[5] = (this.hashArray[5] + f) % this._32bitCeiling;
+    this.hashArray[6] = (this.hashArray[6] + g) % this._32bitCeiling;
+    this.hashArray[7] = (this.hashArray[7] + h) % this._32bitCeiling;
   }
 
   text2Binary(text: string, bitlength: number = 8) {
@@ -154,19 +146,9 @@ export class HashingComponent implements OnInit {
       .join('');
   }
 
-  chopToNbit(inputNumber: number, bits: number): number {
-    return inputNumber;
-  }
-
   sendHashValuesAndMessage() {
     this.hashValues.emit(this.digest);
     this.originalMessage.emit(this.messageOriginal);
-  }
-
-  appendMultipleBits(bitAmount: number, bitType: number) {
-    for (let index = 0; index < bitAmount; index++) {
-      this.appendSingleBit(bitType);
-    }
   }
 
   appendSingleBit(bitType: number): string {
@@ -188,10 +170,8 @@ export class HashingComponent implements OnInit {
   preProcessMessage(message: string): string {
     this.messageInBinaryWithPadding = this.text2Binary(message);
 
-    this.messageLength = this.messageInBinaryWithPadding.length;
-    this.messageLengthIn64bit = this.messageLength
-      .toString(2)
-      .padStart(64, '0');
+    let messageLength = this.messageInBinaryWithPadding.length;
+    let messageLengthIn64bit = messageLength.toString(2).padStart(64, '0');
 
     this.messageInBinaryWithPadding = this.appendSingleBit(1);
 
@@ -201,9 +181,8 @@ export class HashingComponent implements OnInit {
     }
 
     // add length of message in 64bit
-    this.messageInBinaryWithPadding = this.appendLengthIn64bit(
-      this.messageLengthIn64bit
-    );
+    this.messageInBinaryWithPadding =
+      this.appendLengthIn64bit(messageLengthIn64bit);
     console.log(
       'original message: ',
       this.messageOriginal,
