@@ -25,17 +25,6 @@ export class HashingComponent implements OnInit {
   H6: number = 0x1f83d9ab;
   H7: number = 0x5be0cd19;
 
-  hashArray: number[] = [
-    this.H0,
-    this.H1,
-    this.H2,
-    this.H3,
-    this.H4,
-    this.H5,
-    this.H6,
-    this.H7,
-  ];
-
   // Initialize array of round constants: (first 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311):
   roundConstantsArray: number[] = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
@@ -51,6 +40,16 @@ export class HashingComponent implements OnInit {
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
   ];
 
+  hashArray: number[] = [
+    this.H0,
+    this.H1,
+    this.H2,
+    this.H3,
+    this.H4,
+    this.H5,
+    this.H6,
+    this.H7,
+  ];
   messageOriginal: string = 'abc';
   messageInBinaryWithPadding: string = '';
   messageLength: number = 0;
@@ -74,17 +73,21 @@ export class HashingComponent implements OnInit {
 
     // chunking
     this.divideIntoChunks(this.messageInBinaryWithPadding);
-
+    console.log(this.chunks);
     // compressing
+    this.chunks.forEach((element) => {
+      this.compress();
+    });
 
-    // combining
-    console.log(this.digest);
-
-    // sending Data
+    // combining Hash and sending Data
     this.hashArray.forEach((element) => {
       this.digest += element.toString(16);
     });
     this.sendHashValuesAndMessage();
+  }
+
+  compress() {
+    throw new Error('Method not implemented.');
   }
 
   text2Binary(text: string, bitlength: number = 8) {
@@ -153,26 +156,12 @@ export class HashingComponent implements OnInit {
     return this.chunks;
   }
 
-  combineHashesToDigest(): Array<number> {
-    // let result =
-    //   '' +
-    //   this.H0 +
-    //   this.H1 +
-    //   this.H2 +
-    //   this.H3 +
-    //   this.H4 +
-    //   this.H5 +
-    //   this.H6 +
-    //   this.H7;
-
-    let result: Array<number> = [];
-
-    return result;
-  }
-
-  divideIntoChunks(messageToChunk: string) {
-    for (let index = 0; index < messageToChunk.length / 512; index++) {
-      this.chunks[index] = '';
+  divideIntoChunks(messageToChunk: string, chunkLength: number = 512) {
+    for (let index = 0; index < messageToChunk.length / chunkLength; index++) {
+      this.chunks[index] = messageToChunk.substring(
+        index * chunkLength,
+        (index + 1) * chunkLength
+      );
     }
     return this.chunks;
   }
