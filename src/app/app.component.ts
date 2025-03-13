@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { HashingComponent } from './hashing/hashing.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HashingComponent],
+  imports: [HashingComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
