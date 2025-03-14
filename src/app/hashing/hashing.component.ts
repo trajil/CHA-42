@@ -5,7 +5,7 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import { Roundconstants } from './roundconstants';
+import { Roundconstants } from './Roundconstants';
 import { Rotator } from './Rotator';
 
 @Component({
@@ -25,7 +25,7 @@ export class HashingComponent implements OnInit {
 
   // Initialize array of round constants: (first 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311):
   roundConstantsArrayImport = new Roundconstants();
-  roundConstantsArray = this.roundConstantsArrayImport.roundConstantsArray;
+  roundConstantsArrayU32Int = this.roundConstantsArrayImport.u32IntArray;
 
   // All variables are 32 bit unsigned integers and addition is calculated modulo 2^32
   _32bitCeiling = 4294967296;
@@ -41,10 +41,22 @@ export class HashingComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    let myNumber = 20;
+    let base = -20;
+
+    let myNumber = base;
+    let myString: string = base.toString(2);
+
     console.log(myNumber);
+    console.log(myString);
+
     myNumber = this.rotator.rotateLeftNumber(myNumber);
+    myString = this.rotator.rotateLeftString(myString);
+
     console.log(myNumber);
+    console.log(myString);
+
+  
+    console.log("imported constants: ",this.roundConstantsArrayU32Int[0].toString(16));
 
     // this.hashTheMessage();
   }
@@ -153,10 +165,10 @@ export class HashingComponent implements OnInit {
       .join('');
   }
 
-  numberTo32BitString(n: number):string {
+  numberTo32BitString(n: number): string {
     // Convert to binary and pad with leading zeros to ensure 32 bits
     const binaryString = n.toString(2).padStart(32, '0');
-    return binaryString
+    return binaryString;
   }
 
   sendHashValuesAndMessage() {
