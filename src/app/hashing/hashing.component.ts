@@ -20,7 +20,7 @@ export class HashingComponent implements OnInit {
   // Initialize hash values: (first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
   hashArray: Uint32Array = new Uint32Array([
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c,
-    0x1f83d9ab, 0x5be0cd19,
+    0x1f83d9ab, 0x5be0cd19
   ]);
 
   // Initialize array of round constants: (first 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311):
@@ -41,26 +41,19 @@ export class HashingComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    let base = -20;
+    let baseArray: Uint32Array = new Uint32Array([4000000000]);
 
-    let myNumber = base;
-    let myString: string = base.toString(2);
+    let expectedNumerAfterRightRotate3= '10000000000000000000000000000010'
+    let expectedNumerAfterLeftRotate3= '01110011010110010100000000000111'
+    console.log(this.numberTo32BitString(baseArray[0]), "original");
 
-    console.log(myNumber);
-    console.log(myString);
+    baseArray[0] = this.rotator.bitRotateLeftNumber(baseArray[0], 3);
 
-    myNumber = this.rotator.rotateLeftNumber(myNumber);
-    myString = this.rotator.rotateLeftString(myString);
+    console.log(this.numberTo32BitString(baseArray[0]), "actual");
+    console.log(expectedNumerAfterLeftRotate3, "expected");
+ 
 
-    console.log(myNumber);
-    console.log(myString);
-
-    console.log(
-      'imported constants: ',
-      this.roundConstantsArrayU32Int[0].toString(16)
-    );
-
-    this.hashTheMessage();
+   //this.hashTheMessage();
   }
 
   hashTheMessage() {

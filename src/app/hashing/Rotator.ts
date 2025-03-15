@@ -1,27 +1,43 @@
 export class Rotator {
-  shiftRightString(input: string, bits: number = 1): string {
+  bitShiftRightString(input: string, bits: number = 1): string {
     let temp = parseInt(input, 2) >> bits;
 
     return temp.toString(2);
   }
-  shiftLeftString(input: string, bits: number = 1): string {
+  bitShiftLeftString(input: string, bits: number = 1): string {
     let temp = parseInt(input, 2) << bits;
 
     return temp.toString(2);
   }
-  rotateRightString(input: string, bits: number = 1): string {
-    return input;
+  bitRotateRightString(input: string, bits: number = 1): string {
+    let temp = parseInt(input, 2) >> bits;
+
+    return temp.toString(2);
   }
-  rotateLeftString(input: string, bits: number = 1): string {
+  bitRotateLeftString(input: string, bits: number = 1): string {
     let temp = parseInt(input, 2) << bits;
 
     return temp.toString(2);
   }
-  rotateRightNumber(input: number, bits: number = 1): number {
-    return input;
+  bitRotateRightNumber(input: number, bits: number = 1): number {
+    console.log(this.numberTo32BitString(input >>> bits));
+    console.log(this.numberTo32BitString(input << (32 - bits)));
+    let temp = (input >>> bits) | (input << (32 - bits));
+    // ((t1h >>> 1) | (t1l << 31))
+    return temp;
   }
-  rotateLeftNumber(input: number, bits: number = 1): number {
-    return input << bits;
+  bitRotateLeftNumber(input: number, bits: number = 1): number {
+    console.log(this.numberTo32BitString(input << bits));
+    console.log(this.numberTo32BitString(input >>> (32 - bits)));
+    let temp = (input << bits) | (input >>>(32 - bits));
+    // ((t1h >>> 1) | (t1l << 31))
+    return temp;
+  }
+
+  numberTo32BitString(n: number): string {
+    // Convert to binary and pad with leading zeros to ensure 32 bits
+    const binaryString = n.toString(2).padStart(32, '0');
+    return binaryString;
   }
 }
 
