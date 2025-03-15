@@ -20,7 +20,7 @@ export class HashingComponent implements OnInit {
   // Initialize hash values: (first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
   hashArray: Uint32Array = new Uint32Array([
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c,
-    0x1f83d9ab, 0x5be0cd19
+    0x1f83d9ab, 0x5be0cd19,
   ]);
 
   // Initialize array of round constants: (first 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311):
@@ -41,19 +41,20 @@ export class HashingComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
+    this.hashTheMessage();
+  }
+
+  testBitRotate() {
     let baseArray: Uint32Array = new Uint32Array([4000000000]);
 
-    let expectedNumerAfterRightRotate3= '10000000000000000000000000000010'
-    let expectedNumerAfterLeftRotate3= '01110011010110010100000000000111'
-    console.log(this.numberTo32BitString(baseArray[0]), "original");
+    let expectedNumerAfterRightRotate3 = '10000000000000000000000000000010';
+    let expectedNumerAfterLeftRotate3 = '01110011010110010100000000000111';
+    console.log(this.numberTo32BitString(baseArray[0]), 'original');
 
-    baseArray[0] = this.rotator.bitRotateLeftNumber(baseArray[0], 3);
+    baseArray[0] = this.rotator.bitRotateLeftNumber(baseArray[0], 35);
 
-    console.log(this.numberTo32BitString(baseArray[0]), "actual");
-    console.log(expectedNumerAfterLeftRotate3, "expected");
- 
-
-   //this.hashTheMessage();
+    console.log(this.numberTo32BitString(baseArray[0]), 'result');
+    console.log(expectedNumerAfterLeftRotate3, 'control value');
   }
 
   hashTheMessage() {
@@ -68,7 +69,7 @@ export class HashingComponent implements OnInit {
 
     // hashing each chunk
     this.chunks.forEach((element) => {
-      this.hashingEachChunk(element);
+      this.hashingChunk(element);
     });
 
     // combining Hash and sending Data
@@ -78,22 +79,32 @@ export class HashingComponent implements OnInit {
     this.sendHashValuesAndMessage();
   }
 
-  hashingEachChunk(chunk: string) {
+  hashingChunk(chunk: string) {
     // create a 64-entry message schedule array w[0..63] of 32-bit words
-    let messageScheduleArray: Array<string> = [];
-    let messageScheduleArraySize = 64;
+    let messageScheduleArray: Uint32Array = new Uint32Array(64);
+    let first16WordsOfChunkAs32Bit: Uint32Array = new Uint32Array(16);
 
     // copy chunk into first 16 words w[0..15] of the message schedule array
-    let first16WordsOfChunkAs32Bit: Array<string> = this.divideIntoChunks(
-      chunk,
-      32
-    );
-    for (let index = 0; index < messageScheduleArraySize; index++) {
-      if (index < 16) {
-        messageScheduleArray[index] = first16WordsOfChunkAs32Bit[index];
-      } else {
-        messageScheduleArray[index] = '';
-      }
+    let first16WordsOfChunkAs32BitStrings: Array<string> =
+      this.divideIntoChunks(chunk, 32);
+    for (
+      let index = 0;
+      index < first16WordsOfChunkAs32BitStrings.length;
+      index++
+    ) {
+      first16WordsOfChunkAs32Bit[index] = parseInt(
+        first16WordsOfChunkAs32BitStrings[index],
+        2
+      );
+    }
+    console.log(first16WordsOfChunkAs32Bit);
+    console.log(first16WordsOfChunkAs32BitStrings);
+    for (let index = 0; index < messageScheduleArray.length; index++) {
+      // if (index < 16) {
+      //   messageScheduleArray[index] = first16WordsOfChunkAs32Bit[index];
+      // } else {
+      //   messageScheduleArray[index] = '';
+      // }
     }
 
     // Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array:
@@ -102,7 +113,7 @@ export class HashingComponent implements OnInit {
     //     s1 := (w[i-2] rightrotate 17) xor (w[i-2] rightrotate 19) xor (w[i-2] rightshift 10)
     //     w[i] := w[i-16] + s0 + w[i-7] + s1
 
-    for (let index = 16; index < messageScheduleArraySize; index++) {
+    for (let index = 16; index < messageScheduleArray.length; index++) {
       // console.log(index)
     }
 
