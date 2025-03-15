@@ -97,15 +97,14 @@ export class HashingComponent implements OnInit {
         2
       );
     }
-    console.log(first16WordsOfChunkAs32Bit);
-    console.log(first16WordsOfChunkAs32BitStrings);
     for (let index = 0; index < messageScheduleArray.length; index++) {
-      // if (index < 16) {
-      //   messageScheduleArray[index] = first16WordsOfChunkAs32Bit[index];
-      // } else {
-      //   messageScheduleArray[index] = '';
-      // }
+      if (index < 16) {
+        messageScheduleArray[index] = first16WordsOfChunkAs32Bit[index];
+      } else {
+        messageScheduleArray[index] = 0;
+      }
     }
+    console.log(messageScheduleArray);
 
     // Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array:
     // for i from 16 to 63
@@ -113,14 +112,31 @@ export class HashingComponent implements OnInit {
     //     s1 := (w[i-2] rightrotate 17) xor (w[i-2] rightrotate 19) xor (w[i-2] rightshift 10)
     //     w[i] := w[i-16] + s0 + w[i-7] + s1
 
+    let sigmaArray: Uint32Array = new Uint32Array(2);
+
     for (let index = 16; index < messageScheduleArray.length; index++) {
-      // console.log(index)
+      sigmaArray[0] =
+        this.rotator.bitRotateRightNumber(messageScheduleArray[index - 15], 7) ^
+        this.rotator.bitRotateRightNumber(
+          messageScheduleArray[index - 15],
+          18
+        ) ^
+        (messageScheduleArray[index - 15] >> 3);
+      sigmaArray[1] =
+        this.rotator.bitRotateRightNumber(messageScheduleArray[index - 2], 17) ^
+        this.rotator.bitRotateRightNumber(messageScheduleArray[index - 2], 19) ^
+        (messageScheduleArray[index - 2] >> 10);
+      messageScheduleArray[index] =
+        messageScheduleArray[index - 16] +
+        sigmaArray[0] +
+        messageScheduleArray[index - 7] +
+        sigmaArray[1];
     }
 
     // Initialize working variables to current hash value:
     // let a = this.text2Binary(this.hashArray[0].toString(),32);
     let a = this.hashArray[0];
-    console.log('a after initialisation: ', a, 'type of a:', typeof a);
+    // console.log('a after initialisation: ', a, 'type of a:', typeof a);
     let b = this.hashArray[1];
     let c = this.hashArray[2];
     let d = this.hashArray[3];
@@ -150,10 +166,10 @@ export class HashingComponent implements OnInit {
     // Add the compressed chunk to the current hash value:
 
     this.hashArray[0] = (this.hashArray[0] + a) % this._32bitCeiling;
-    console.log(
-      'End of round of hashingChunk after adding a, value of H0 MODULO 2^32: ',
-      this.hashArray[0]
-    );
+    // console.log(
+    //   'End of round of hashingChunk after adding a, value of H0 MODULO 2^32: ',
+    //   this.hashArray[0]
+    // );
 
     this.hashArray[1] = (this.hashArray[1] + b) % this._32bitCeiling;
     this.hashArray[2] = (this.hashArray[2] + c) % this._32bitCeiling;

@@ -20,10 +20,10 @@ export class AppComponent {
 
   receiveHashValues(hash: string) {
     this.wert = hash;
-    console.log('Received hash value:', hash);
+    // console.log('Received hash value:', hash);
   }
   receiveMessage(message: string) {
     this.message = message;
-    console.log('Received message:', message);
+    // console.log('Received message:', message);
   }
 }
