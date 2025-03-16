@@ -112,31 +112,33 @@ export class HashingComponent implements OnInit {
     //     s1 := (w[i-2] rightrotate 17) xor (w[i-2] rightrotate 19) xor (w[i-2] rightshift 10)
     //     w[i] := w[i-16] + s0 + w[i-7] + s1
 
-    let sigmaArray: Uint32Array = new Uint32Array(2);
+    let stretchingArray: Uint32Array = new Uint32Array(2);
 
     for (let index = 16; index < messageScheduleArray.length; index++) {
-      sigmaArray[0] =
+      stretchingArray[0] =
         this.rotator.bitRotateRightNumber(messageScheduleArray[index - 15], 7) ^
         this.rotator.bitRotateRightNumber(
           messageScheduleArray[index - 15],
           18
         ) ^
         (messageScheduleArray[index - 15] >> 3);
-      sigmaArray[1] =
+      stretchingArray[1] =
         this.rotator.bitRotateRightNumber(messageScheduleArray[index - 2], 17) ^
         this.rotator.bitRotateRightNumber(messageScheduleArray[index - 2], 19) ^
         (messageScheduleArray[index - 2] >> 10);
       messageScheduleArray[index] =
         messageScheduleArray[index - 16] +
-        sigmaArray[0] +
+        stretchingArray[0] +
         messageScheduleArray[index - 7] +
-        sigmaArray[1];
+        stretchingArray[1];
     }
 
     // Initialize working variables to current hash value:
-    // let a = this.text2Binary(this.hashArray[0].toString(),32);
+    let workingVariables: Uint32Array = new Uint32Array(8);
+
+    workingVariables = this.hashArray;
+
     let a = this.hashArray[0];
-    // console.log('a after initialisation: ', a, 'type of a:', typeof a);
     let b = this.hashArray[1];
     let c = this.hashArray[2];
     let d = this.hashArray[3];
@@ -147,12 +149,63 @@ export class HashingComponent implements OnInit {
 
     // Compression function main loop:
     // for i from 0 to 63
-    //     S1 := (e rightrotate 6) xor (e rightrotate 11) xor (e rightrotate 25)
-    //     ch := (e and f) xor ((not e) and g)
-    //     temp1 := h + S1 + ch + k[i] + w[i]
-    //     S0 := (a rightrotate 2) xor (a rightrotate 13) xor (a rightrotate 22)
-    //     maj := (a and b) xor (a and c) xor (b and c)
-    //     temp2 := S0 + maj
+
+    let compressionArray: Uint32Array = new Uint32Array(6);
+    for (let index = 0; index < 64; index++) {
+      //     S1 := (e rightrotate 6) xor (e rightrotate 11) xor (e rightrotate 25)
+      //     ch := (e and f) xor ((not e) and g)
+      //     temp1 := h + S1 + ch + k[i] + w[i]
+      //     S0 := (a rightrotate 2) xor (a rightrotate 13) xor (a rightrotate 22)
+      //     maj := (a and b) xor (a and c) xor (b and c)
+      //     temp2 := S0 + maj
+      compressionArray[CompressionVariables.S1] =
+        this.rotator.bitRotateRightNumber(
+          workingVariables[WorkingVariables.e],
+          6
+        ) ^
+        this.rotator.bitRotateRightNumber(
+          workingVariables[WorkingVariables.e],
+          11
+        ) ^
+        this.rotator.bitRotateRightNumber(
+          workingVariables[WorkingVariables.e],
+          11
+        );
+      compressionArray[CompressionVariables.ch] =
+        (workingVariables[WorkingVariables.e] &
+          workingVariables[WorkingVariables.f]) ^
+        (~workingVariables[WorkingVariables.e] &
+          workingVariables[WorkingVariables.g]);
+      compressionArray[CompressionVariables.temp1] =
+        workingVariables[WorkingVariables.h] +
+        compressionArray[CompressionVariables.S1] +
+        compressionArray[CompressionVariables.ch] +
+        this.roundConstantsArrayU32Int[index] +
+        messageScheduleArray[index];
+      compressionArray[CompressionVariables.S0] =
+        this.rotator.bitRotateRightNumber(
+          workingVariables[WorkingVariables.a],
+          2
+        ) ^
+        this.rotator.bitRotateRightNumber(
+          workingVariables[WorkingVariables.a],
+          13
+        ) ^
+        this.rotator.bitRotateRightNumber(
+          workingVariables[WorkingVariables.a],
+          22
+        );
+      compressionArray[CompressionVariables.maj] =
+        (workingVariables[WorkingVariables.a] &
+          workingVariables[WorkingVariables.b]) ^
+        (workingVariables[WorkingVariables.a] &
+          workingVariables[WorkingVariables.c]) ^
+        (workingVariables[WorkingVariables.b] &
+          workingVariables[WorkingVariables.c]);
+      compressionArray[CompressionVariables.temp2] =
+        compressionArray[CompressionVariables.S0] +
+        compressionArray[CompressionVariables.maj];
+    }
 
     //     h := g
     //     g := f
@@ -165,19 +218,10 @@ export class HashingComponent implements OnInit {
 
     // Add the compressed chunk to the current hash value:
 
-    this.hashArray[0] = (this.hashArray[0] + a) % this._32bitCeiling;
-    // console.log(
-    //   'End of round of hashingChunk after adding a, value of H0 MODULO 2^32: ',
-    //   this.hashArray[0]
-    // );
-
-    this.hashArray[1] = (this.hashArray[1] + b) % this._32bitCeiling;
-    this.hashArray[2] = (this.hashArray[2] + c) % this._32bitCeiling;
-    this.hashArray[3] = (this.hashArray[3] + d) % this._32bitCeiling;
-    this.hashArray[4] = (this.hashArray[4] + e) % this._32bitCeiling;
-    this.hashArray[5] = (this.hashArray[5] + f) % this._32bitCeiling;
-    this.hashArray[6] = (this.hashArray[6] + g) % this._32bitCeiling;
-    this.hashArray[7] = (this.hashArray[7] + h) % this._32bitCeiling;
+    for (let index = 0; index < workingVariables.length; index++) {
+      this.hashArray[index] =
+        (this.hashArray[index] + workingVariables[index]) % this._32bitCeiling;
+    }
   }
 
   text2Binary(text: string, bitlength: number = 8) {
@@ -252,4 +296,23 @@ export class HashingComponent implements OnInit {
     }
     return chunks;
   }
+}
+
+export enum WorkingVariables {
+  a = 0,
+  b,
+  c,
+  d,
+  e,
+  f,
+  g,
+  h,
+}
+export enum CompressionVariables {
+  S1 = 0,
+  ch,
+  temp1,
+  S0,
+  maj,
+  temp2,
 }
