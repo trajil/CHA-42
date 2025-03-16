@@ -12,18 +12,17 @@ export class AppComponent {
   title = 'CHA-42';
   wert?: string;
   message?: string;
+  inputMessage: string = ''; 
 
-  constructor() {
-    this.wert = '';
-    this.message = '';
+  sendMessageToHashingComponent() {
+    this.message = this.inputMessage;
   }
 
   receiveHashValues(hash: string) {
     this.wert = hash;
-    // console.log('Received hash value:', hash);
   }
+
   receiveMessage(message: string) {
     this.message = message;
-    // console.log('Received message:', message);
   }
 }

@@ -4,6 +4,7 @@ import {
   EventEmitter,
   OnInit,
   Output,
+  Input
 } from '@angular/core';
 import { Roundconstants } from './Roundconstants';
 import { Rotator } from './Rotator';
@@ -14,6 +15,7 @@ import { Rotator } from './Rotator';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HashingComponent implements OnInit {
+  @Input() messageToHash: string = ''; // Receiving message from AppComponent
   @Output() hashValues = new EventEmitter<string>();
   @Output() originalMessage = new EventEmitter<string>();
 
@@ -30,9 +32,9 @@ export class HashingComponent implements OnInit {
   // All variables are 32 bit unsigned integers and addition is calculated modulo 2^32
   _32bitCeiling = 4294967296;
 
-  // messageOriginal: string = 'RedBlockBlue';
   messageOriginal: string = 'abc';
   messageInBinaryWithPadding: string = '';
+  key = 0;
 
   digest: string = '';
 
@@ -45,56 +47,29 @@ export class HashingComponent implements OnInit {
     this.hashTheMessage();
   }
 
-  testBitRotate() {
-    let baseArray: Uint32Array = new Uint32Array([4000000000]);
-
-    let expectedNumerAfterRightRotate3 = '10000000000000000000000000000010';
-    let expectedNumerAfterLeftRotate3 = '01110011010110010100000000000111';
-    console.log(this.numberTo32BitString(baseArray[0]), 'original');
-
-    baseArray[0] = this.rotator.bitRotateLeftNumber(baseArray[0], 35);
-
-    console.log(this.numberTo32BitString(baseArray[0]), 'result');
-    console.log(expectedNumerAfterLeftRotate3, 'control value');
-  }
-
   hashTheMessage() {
-    // preprocessing
     this.messageInBinaryWithPadding = this.preProcessMessage(
       this.messageOriginal
     );
 
-    // chunking
     this.chunks = this.divideIntoChunks(this.messageInBinaryWithPadding);
     console.log(this.chunks);
 
-    // hashing each chunk
     this.chunks.forEach((element) => {
-      this.hashingChunk(element);
+      this.computeHash(element);
     });
 
-    // combining Hash and sending Data
-    // this.hashArray.forEach((element) => {
-    //   this.digest += element.toString(16);
-    // });
-
-    function toBigEndianHex(value: number): string {
-      return ('00000000' + value.toString(16)).slice(-8); // Ensure 8 hex chars
-    }
-
-    for (let index = 0; index < 8; index++) {
-      this.digest += toBigEndianHex(this.hashArray[index]);
-    }
+    this.hashArray.forEach((element) => {
+      this.digest += element.toString(16);
+    });
 
     this.sendHashValuesAndMessage();
   }
 
-  hashingChunk(chunk: string) {
-    // create a 64-entry message schedule array w[0..63] of 32-bit words
+  computeHash(chunk: string) {
     let messageScheduleArray: Uint32Array = new Uint32Array(64);
     let first16WordsOfChunkAs32Bit: Uint32Array = new Uint32Array(16);
 
-    // copy chunk into first 16 words w[0..15] of the message schedule array
     let first16WordsOfChunkAs32BitStrings: Array<string> =
       this.divideIntoChunks(chunk, 32);
     for (
@@ -143,16 +118,12 @@ export class HashingComponent implements OnInit {
         sigmaArray[1];
     }
 
-    // Initialize working variables to current hash value:
     let workingVariables: Uint32Array = new Uint32Array(8);
 
     workingVariables = this.hashArray.slice();
 
-    // Compression function main loop:
-    // for i from 0 to 63
-
     let compressionArray: Uint32Array = new Uint32Array(6);
-    for (let index = 0; index < 64; index++) {
+    for (let index = 0; index < 64 + this.key; index++) {
       //     S1 := (e rightrotate 6) xor (e rightrotate 11) xor (e rightrotate 25)
       //     ch := (e and f) xor ((not e) and g)
       //     temp1 := h + S1 + ch + k[i] + w[i]
@@ -181,8 +152,8 @@ export class HashingComponent implements OnInit {
         workingVariables[WorkingVariables.h] +
         compressionArray[CompressionVariables.S1] +
         compressionArray[CompressionVariables.ch] +
-        this.roundConstantsArrayU32Int[index] +
-        messageScheduleArray[index];
+        this.roundConstantsArrayU32Int[index%64] +
+        messageScheduleArray[index%64];
       compressionArray[CompressionVariables.S0] =
         this.rotator.bitRotateRightNumber(
           workingVariables[WorkingVariables.a],
@@ -207,14 +178,6 @@ export class HashingComponent implements OnInit {
         compressionArray[CompressionVariables.S0] +
         compressionArray[CompressionVariables.maj];
 
-      //     h := g
-      //     g := f
-      //     f := e
-      //     e := d + temp1
-      //     d := c
-      //     c := b
-      //     b := a
-      //     a := temp1 + temp2
 
       workingVariables[WorkingVariables.h] =
         workingVariables[WorkingVariables.g];
@@ -236,8 +199,6 @@ export class HashingComponent implements OnInit {
         compressionArray[CompressionVariables.temp2];
     }
 
-    // Add the compressed chunk to the current hash value:
-
     for (let index = 0; index < workingVariables.length; index++) {
       this.hashArray[index] = this.hashArray[index] + workingVariables[index];
     }
@@ -251,7 +212,6 @@ export class HashingComponent implements OnInit {
   }
 
   numberTo32BitString(n: number): string {
-    // Convert to binary and pad with leading zeros to ensure 32 bits
     const binaryString = n.toString(2).padStart(32, '0');
     return binaryString;
   }
@@ -273,10 +233,6 @@ export class HashingComponent implements OnInit {
     return this.messageInBinaryWithPadding + L;
   }
 
-  logLengthInBits(input: any) {
-    console.log(input.length);
-  }
-
   preProcessMessage(message: string): string {
     this.messageInBinaryWithPadding = this.text2Binary(message);
 
@@ -285,12 +241,10 @@ export class HashingComponent implements OnInit {
 
     this.messageInBinaryWithPadding = this.appendSingleBit(1);
 
-    // add K 0-bits until the length -64 is dividible by 512
     while ((this.messageInBinaryWithPadding.length + 64) % 512 != 0) {
       this.messageInBinaryWithPadding = this.appendSingleBit(0);
     }
 
-    // add length of message in 64bit
     this.messageInBinaryWithPadding =
       this.appendLengthIn64bit(messageLengthIn64bit);
     console.log(
