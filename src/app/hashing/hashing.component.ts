@@ -30,6 +30,7 @@ export class HashingComponent implements OnInit {
   // All variables are 32 bit unsigned integers and addition is calculated modulo 2^32
   _32bitCeiling = 4294967296;
 
+  // messageOriginal: string = 'RedBlockBlue';
   messageOriginal: string = 'abc';
   messageInBinaryWithPadding: string = '';
 
@@ -113,7 +114,7 @@ export class HashingComponent implements OnInit {
         messageScheduleArray[index] = 0;
       }
     }
-    console.log(messageScheduleArray);
+    console.log(messageScheduleArray[16]);
 
     // Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array:
     // for i from 16 to 63
@@ -130,11 +131,11 @@ export class HashingComponent implements OnInit {
           messageScheduleArray[index - 15],
           18
         ) ^
-        (messageScheduleArray[index - 15] >> 3);
+        (messageScheduleArray[index - 15] >>> 3);
       sigmaArray[1] =
         this.rotator.bitRotateRightNumber(messageScheduleArray[index - 2], 17) ^
         this.rotator.bitRotateRightNumber(messageScheduleArray[index - 2], 19) ^
-        (messageScheduleArray[index - 2] >> 10);
+        (messageScheduleArray[index - 2] >>> 10);
       messageScheduleArray[index] =
         messageScheduleArray[index - 16] +
         sigmaArray[0] +
