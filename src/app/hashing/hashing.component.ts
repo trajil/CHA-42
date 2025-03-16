@@ -73,9 +73,18 @@ export class HashingComponent implements OnInit {
     });
 
     // combining Hash and sending Data
-    this.hashArray.forEach((element) => {
-      this.digest += element.toString(16);
-    });
+    // this.hashArray.forEach((element) => {
+    //   this.digest += element.toString(16);
+    // });
+
+    function toBigEndianHex(value: number): string {
+      return ('00000000' + value.toString(16)).slice(-8); // Ensure 8 hex chars
+    }
+
+    for (let index = 0; index < 8; index++) {
+      this.digest += toBigEndianHex(this.hashArray[index]);
+    }
+
     this.sendHashValuesAndMessage();
   }
 
@@ -112,40 +121,31 @@ export class HashingComponent implements OnInit {
     //     s1 := (w[i-2] rightrotate 17) xor (w[i-2] rightrotate 19) xor (w[i-2] rightshift 10)
     //     w[i] := w[i-16] + s0 + w[i-7] + s1
 
-    let stretchingArray: Uint32Array = new Uint32Array(2);
+    let sigmaArray: Uint32Array = new Uint32Array(2);
 
     for (let index = 16; index < messageScheduleArray.length; index++) {
-      stretchingArray[0] =
+      sigmaArray[0] =
         this.rotator.bitRotateRightNumber(messageScheduleArray[index - 15], 7) ^
         this.rotator.bitRotateRightNumber(
           messageScheduleArray[index - 15],
           18
         ) ^
         (messageScheduleArray[index - 15] >> 3);
-      stretchingArray[1] =
+      sigmaArray[1] =
         this.rotator.bitRotateRightNumber(messageScheduleArray[index - 2], 17) ^
         this.rotator.bitRotateRightNumber(messageScheduleArray[index - 2], 19) ^
         (messageScheduleArray[index - 2] >> 10);
       messageScheduleArray[index] =
         messageScheduleArray[index - 16] +
-        stretchingArray[0] +
+        sigmaArray[0] +
         messageScheduleArray[index - 7] +
-        stretchingArray[1];
+        sigmaArray[1];
     }
 
     // Initialize working variables to current hash value:
     let workingVariables: Uint32Array = new Uint32Array(8);
 
-    workingVariables = this.hashArray;
-
-    let a = this.hashArray[0];
-    let b = this.hashArray[1];
-    let c = this.hashArray[2];
-    let d = this.hashArray[3];
-    let e = this.hashArray[4];
-    let f = this.hashArray[5];
-    let g = this.hashArray[6];
-    let h = this.hashArray[7];
+    workingVariables = this.hashArray.slice();
 
     // Compression function main loop:
     // for i from 0 to 63
@@ -169,7 +169,7 @@ export class HashingComponent implements OnInit {
         ) ^
         this.rotator.bitRotateRightNumber(
           workingVariables[WorkingVariables.e],
-          11
+          25
         );
       compressionArray[CompressionVariables.ch] =
         (workingVariables[WorkingVariables.e] &
@@ -205,22 +205,40 @@ export class HashingComponent implements OnInit {
       compressionArray[CompressionVariables.temp2] =
         compressionArray[CompressionVariables.S0] +
         compressionArray[CompressionVariables.maj];
-    }
 
-    //     h := g
-    //     g := f
-    //     f := e
-    //     e := d + temp1
-    //     d := c
-    //     c := b
-    //     b := a
-    //     a := temp1 + temp2
+      //     h := g
+      //     g := f
+      //     f := e
+      //     e := d + temp1
+      //     d := c
+      //     c := b
+      //     b := a
+      //     a := temp1 + temp2
+
+      workingVariables[WorkingVariables.h] =
+        workingVariables[WorkingVariables.g];
+      workingVariables[WorkingVariables.g] =
+        workingVariables[WorkingVariables.f];
+      workingVariables[WorkingVariables.f] =
+        workingVariables[WorkingVariables.e];
+      workingVariables[WorkingVariables.e] =
+        workingVariables[WorkingVariables.d] +
+        compressionArray[CompressionVariables.temp1];
+      workingVariables[WorkingVariables.d] =
+        workingVariables[WorkingVariables.c];
+      workingVariables[WorkingVariables.c] =
+        workingVariables[WorkingVariables.b];
+      workingVariables[WorkingVariables.b] =
+        workingVariables[WorkingVariables.a];
+      workingVariables[WorkingVariables.a] =
+        compressionArray[CompressionVariables.temp1] +
+        compressionArray[CompressionVariables.temp2];
+    }
 
     // Add the compressed chunk to the current hash value:
 
     for (let index = 0; index < workingVariables.length; index++) {
-      this.hashArray[index] =
-        (this.hashArray[index] + workingVariables[index]) % this._32bitCeiling;
+      this.hashArray[index] = this.hashArray[index] + workingVariables[index];
     }
   }
 
