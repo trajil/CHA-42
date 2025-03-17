@@ -5,7 +5,6 @@ import {
   OnInit,
   Output,
   Input,
-  SimpleChanges,
 } from '@angular/core';
 import { Roundconstants } from './Roundconstants';
 import { Rotator } from './Rotator';
@@ -30,13 +29,14 @@ export class HashingComponent implements OnInit {
   // Initialize array of round constants: (first 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311):
   roundConstantsArrayImport = new Roundconstants();
   roundConstantsArrayU32Int = this.roundConstantsArrayImport.u32IntArray;
+  primeNumbers = this.roundConstantsArrayImport.primeNumbers;
 
   // All variables are 32 bit unsigned integers and addition is calculated modulo 2^32
   _32bitCeiling = 4294967296;
 
   messageOriginal: string = this.messageToHash;
   messageInBinaryWithPadding: string = '';
-  key = 0;
+  key = 1;
 
   digest: string = '';
 
@@ -46,11 +46,17 @@ export class HashingComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    //this.hashTheMessage();
-
-    let myNumber = 2;
-    myNumber = this.calculateFirstNBitFractionOfRootM(myNumber, 32, 2);
-    console.log(myNumber.toString(16));
+    if (this.key != 0) {
+      for (let index = 63; index < 128; index++) {
+        this.primeNumbers[index] = this.calculateFirstNBitFractionOfRootM(
+          this.primeNumbers[index],
+          32,
+          3 + (this.key % 5)
+        );
+        console.log(this.primeNumbers[index].toString(16));
+      }
+    }
+    this.hashTheMessage();
   }
 
   calculateFirstNBitFractionOfRootM(
@@ -64,11 +70,9 @@ export class HashingComponent implements OnInit {
     for (let index = 0; index < bits; index++) {
       input *= 2;
       let truncatedNumber = Math.trunc(input); //
-      input = input % 1; 
+      input = input % 1;
       resultString += truncatedNumber;
     }
-
-    console.log(resultString);
     let result = parseInt(resultString, 2);
 
     return result;
@@ -180,8 +184,16 @@ export class HashingComponent implements OnInit {
         workingVariables[WorkingVariables.h] +
         compressionArray[CompressionVariables.S1] +
         compressionArray[CompressionVariables.ch] +
-        this.roundConstantsArrayU32Int[index % 64] +
-        messageScheduleArray[index % 64];
+        this.roundConstantsArrayU32Int[index] +
+        messageScheduleArray[index];
+      if (this.key != 0) {
+        compressionArray[CompressionVariables.temp1] =
+          compressionArray[CompressionVariables.temp1] +
+          this.rotator.bitRotateRightNumber(
+            this.primeNumbers[index + 63],
+            this.key
+          );
+      }
       compressionArray[CompressionVariables.S0] =
         this.rotator.bitRotateRightNumber(
           workingVariables[WorkingVariables.a],
