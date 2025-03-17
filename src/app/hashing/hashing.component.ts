@@ -4,18 +4,20 @@ import {
   EventEmitter,
   OnInit,
   Output,
-  Input
+  Input,
+  SimpleChanges,
 } from '@angular/core';
 import { Roundconstants } from './Roundconstants';
 import { Rotator } from './Rotator';
 
 @Component({
   selector: 'app-hashing',
-  template: `<h1>CHA-42</h1>`,
+  templateUrl: './hashing.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HashingComponent implements OnInit {
   @Input() messageToHash: string = ''; // Receiving message from AppComponent
+  @Input() keyToUse: number = 0; // Receiving message from AppComponent
   @Output() hashValues = new EventEmitter<string>();
   @Output() originalMessage = new EventEmitter<string>();
 
@@ -32,7 +34,7 @@ export class HashingComponent implements OnInit {
   // All variables are 32 bit unsigned integers and addition is calculated modulo 2^32
   _32bitCeiling = 4294967296;
 
-  messageOriginal: string = 'abc';
+  messageOriginal: string = this.messageToHash;
   messageInBinaryWithPadding: string = '';
   key = 0;
 
@@ -44,10 +46,36 @@ export class HashingComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    this.hashTheMessage();
+    //this.hashTheMessage();
+
+    let myNumber = 2;
+    myNumber = this.calculateFirstNBitFractionOfRootM(myNumber, 32, 2);
+    console.log(myNumber.toString(16));
+  }
+
+  calculateFirstNBitFractionOfRootM(
+    input: number,
+    bits: number = 32,
+    root: number = 2
+  ): number {
+    input = Math.pow(input, 1 / root) % 1;
+    let resultString = '';
+
+    for (let index = 0; index < bits; index++) {
+      input *= 2;
+      let truncatedNumber = Math.trunc(input); //
+      input = input % 1; 
+      resultString += truncatedNumber;
+    }
+
+    console.log(resultString);
+    let result = parseInt(resultString, 2);
+
+    return result;
   }
 
   hashTheMessage() {
+    this.digest = '';
     this.messageInBinaryWithPadding = this.preProcessMessage(
       this.messageOriginal
     );
@@ -152,8 +180,8 @@ export class HashingComponent implements OnInit {
         workingVariables[WorkingVariables.h] +
         compressionArray[CompressionVariables.S1] +
         compressionArray[CompressionVariables.ch] +
-        this.roundConstantsArrayU32Int[index%64] +
-        messageScheduleArray[index%64];
+        this.roundConstantsArrayU32Int[index % 64] +
+        messageScheduleArray[index % 64];
       compressionArray[CompressionVariables.S0] =
         this.rotator.bitRotateRightNumber(
           workingVariables[WorkingVariables.a],
@@ -177,7 +205,6 @@ export class HashingComponent implements OnInit {
       compressionArray[CompressionVariables.temp2] =
         compressionArray[CompressionVariables.S0] +
         compressionArray[CompressionVariables.maj];
-
 
       workingVariables[WorkingVariables.h] =
         workingVariables[WorkingVariables.g];
