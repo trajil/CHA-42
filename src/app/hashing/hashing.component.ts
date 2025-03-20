@@ -5,6 +5,8 @@ import {
   OnInit,
   Output,
   Input,
+  OnChanges,
+  SimpleChanges,
 } from '@angular/core';
 import { Roundconstants } from './Roundconstants';
 import { Rotator } from './Rotator';
@@ -14,7 +16,7 @@ import { Rotator } from './Rotator';
   templateUrl: './hashing.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HashingComponent implements OnInit {
+export class HashingComponent implements OnInit, OnChanges {
   @Input() messageToHash: string = ''; // Receiving message from AppComponent
   @Input() keyToUse: number = 0; // Receiving message from AppComponent
   @Output() hashValues = new EventEmitter<string>();
@@ -36,7 +38,7 @@ export class HashingComponent implements OnInit {
 
   messageOriginal: string = this.messageToHash;
   messageInBinaryWithPadding: string = '';
-  key = 1;
+  key = 0;
 
   digest: string = '';
 
@@ -57,6 +59,14 @@ export class HashingComponent implements OnInit {
       }
     }
     this.hashTheMessage();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['messageToHash'] && changes['messageToHash'].currentValue) {
+      this.messageOriginal = changes['messageToHash'].currentValue;
+      console.log(this.messageOriginal);
+      this.hashTheMessage();
+    }
   }
 
   calculateFirstNBitFractionOfRootM(
@@ -94,6 +104,11 @@ export class HashingComponent implements OnInit {
     this.hashArray.forEach((element) => {
       this.digest += element.toString(16);
     });
+    this.chunks = [];
+    this.hashArray = new Uint32Array([
+      0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c,
+      0x1f83d9ab, 0x5be0cd19,
+    ]);
 
     this.sendHashValuesAndMessage();
   }
@@ -256,6 +271,7 @@ export class HashingComponent implements OnInit {
   }
 
   sendHashValuesAndMessage() {
+    console.log(this.messageOriginal, this.digest);
     this.hashValues.emit(this.digest);
     this.originalMessage.emit(this.messageOriginal);
   }

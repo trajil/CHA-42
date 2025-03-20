@@ -1,26 +1,26 @@
 <div>
+  <div>
+    <app-hashing
+      [messageToHash]="inputMessage"
+      (originalMessage)="receiveMessage($event)"
+      (hashValues)="receiveHashValues($event)"
+    ></app-hashing>
+  </div>
   <mat-form-field>
     <mat-label>Message</mat-label>
     <input matInput [(ngModel)]="inputMessage" />
   </mat-form-field>
 
-  <button mat-raised-button (click)="sendMessageToHashingComponent()">
-    Hash Message
+  <button mat-raised-button (click)="resetToZero()">
+    RESET
   </button>
 
-  <div>
-    <app-hashing
-      [messageToHash]="inputMessage"
-      (hashValues)="receiveHashValues($event)"
-      (originalMessage)="receiveMessage($event)"
-    ></app-hashing>
-  </div>
 
   <div>
     <h2>Original Message:</h2>
     <p>{{ message }}</p>
     <br />
-    <h2>Hash Value from HashingComponent:</h2>
+    <h2>Hash Value from HashingComponent with key {{this.key}}:</h2>
     <p>{{ wert }}</p>
   </div>
 </div>
