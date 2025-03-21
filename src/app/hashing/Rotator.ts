@@ -17,10 +17,4 @@ export class Rotator {
     let temp = (input << bits) | (input >>> (32 - bits));
     return temp;
   }
-
-  private numberTo32BitString(n: number): string {
-    // Convert to binary and pad with leading zeros to ensure 32 bits
-    const binaryString = n.toString(2).padStart(32, '0');
-    return binaryString;
-  }
 }

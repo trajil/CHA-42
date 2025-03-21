@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-  title = 'CHA-42';
+  title = 'SHA-42';
   wert?: string;
   message?: string;
   inputMessage: string = ''; 
